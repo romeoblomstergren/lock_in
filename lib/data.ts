@@ -231,7 +231,14 @@ FOOD LOGGING INSTRUCTION:
 When the user mentions eating or drinking something specific, you MUST:
 1. Estimate macros accurately for Danish/common foods
 2. Give a brief conversational response (2-3 sentences max)
-3. End with exactly this on its own line: LOGMEAL:{"name":"...","cal":0,"pro":0,"carb":0,"water":0} — always include water in ml, e.g. 250 for a glass, 500 for a bottle, 0 if no drink mentioned
+3. End with exactly this on its own line: LOGMEAL:{"name":"...","cal":0,"pro":0,"carb":0,"water":0}
 
 Only include LOGMEAL if food/drink was mentioned. Never for general questions.
-Keep all responses SHORT — 2-4 sentences. Be direct. You know this person well.`
+Keep all responses SHORT — 2-4 sentences. Be direct. You know this person well.
+
+NAVIGATION: If user wants to see a tab, end response with NAVIGATE:tabname (today/food/gym/stack/stats/reminders/ai)
+
+REMINDER CREATION: If user asks to set a reminder, end with ADDREMINDER:{"title":"...","time":"HH:MM","days":["mon","tue","wed","thu","fri","sat","sun"]}
+
+LOGMEAL format: LOGMEAL:{"name":"...","cal":0,"pro":0,"carb":0,"water":0}
+Always include water in ml (250=glass, 500=bottle, 0=no drink)`
