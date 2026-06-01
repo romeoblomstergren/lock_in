@@ -34,7 +34,43 @@ export default function RemindersTab() {
     const r = preset || form
     if (!r.title || !r.time) return
     await supabase.from('reminders').insert({ title:r.title, time:r.time, days:r.days, active:true })
+    addToCalendar(r.title, r.time, r.days)
     setForm({ title:'', time:'', days:ALL_DAYS }); setAdding(false); load()
+  }
+
+  function addToCalendar(title: string, time: string, days: string[]) {
+    const dayMap: Record<string,string> = { mon:'MO',tue:'TU',wed:'WE',thu:'TH',fri:'FR',sat:'SA',sun:'SU' }
+    const byday = days.map(d => dayMap[d]).join(',')
+    const today = new Date()
+    const [h, m] = time.split(':').map(Number)
+    const start = new Date(today)
+    start.setHours(h, m, 0, 0)
+    const end = new Date(start)
+    end.setMinutes(end.getMinutes() + 30)
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g,'').split('.')[0]
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'BEGIN:VEVENT',
+      `DTSTART:${fmt(start)}`,
+      `DTEND:${fmt(end)}`,
+      `RRULE:FREQ=WEEKLY;BYDAY=${byday}`,
+      `SUMMARY:${title}`,
+      'BEGIN:VALARM',
+      'TRIGGER:-PT0M',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:${title}`,
+      'END:VALARM',
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\n')
+    const blob = new Blob([ics], { type: 'text/calendar' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${title.replace(/\s+/g,'-')}.ics`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   async function toggle(id: string, active: boolean) {
