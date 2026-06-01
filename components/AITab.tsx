@@ -30,10 +30,15 @@ export default function AITab({ onNavigate }: { onNavigate: (tab: string) => voi
   useEffect(() => { ref.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
   async function getCtx() {
-    const { data } = await supabase.from('meals').select('cal,pro,carb,water').eq('date', today)
-    if (!data) return ''
-    const t = data.reduce((a: any, m: any) => ({ cal: a.cal+m.cal, pro: a.pro+m.pro, carb: a.carb+m.carb, water: a.water+(m.water||0) }), { cal:0,pro:0,carb:0,water:0 })
-    return `Today's macros: ${Math.round(t.cal)}kcal (need ${Math.round(DAILY_TARGETS.cal-t.cal)} more), ${Math.round(t.pro)}g protein (need ${Math.round(DAILY_TARGETS.protein-t.pro)}g more), ${Math.round(t.carb)}g carbs, ${(t.water/1000).toFixed(1)}L water. Cycle day ${cycleDay} of 91.`
+    const [meals, health] = await Promise.all([
+      supabase.from('meals').select('cal,pro,carb,water').eq('date', today),
+      supabase.from('health_data').select('*').order('date', { ascending: false }).limit(1)
+    ])
+    const t = (meals.data||[]).reduce((a: any, m: any) => ({ cal: a.cal+m.cal, pro: a.pro+m.pro, carb: a.carb+m.carb, water: a.water+(m.water||0) }), { cal:0,pro:0,carb:0,water:0 })
+    const h = health.data?.[0]
+    const macroCtx = `Today: ${Math.round(t.cal)}kcal (need ${Math.round(DAILY_TARGETS.cal-t.cal)} more), ${Math.round(t.pro)}g protein (need ${Math.round(DAILY_TARGETS.protein-t.pro)}g more), ${Math.round(t.carb)}g carbs, ${(t.water/1000).toFixed(1)}L water.`
+    const healthCtx = h ? `Health data (${h.date}): HRV ${h.hrv||'unknown'}ms, Resting HR ${h.rhr||'unknown'}bpm, Sleep ${h.sleep_hours||'unknown'}h, Recovery ${h.sleep_score||'unknown'}%. ${h.hrv && h.hrv < 25 ? 'CRITICAL RECOVERY — advise rest.' : h.hrv && h.hrv < 40 ? 'LOW RECOVERY — light training only.' : h.hrv && h.hrv >= 40 ? 'GOOD RECOVERY — green light to train hard.' : ''}` : 'No health data logged today.'
+    return `Cycle day ${cycleDay} of 91. ${macroCtx} ${healthCtx}`
   }
 
   async function send(text?: string) {
