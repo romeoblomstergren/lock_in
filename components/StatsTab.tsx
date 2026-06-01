@@ -26,6 +26,22 @@ export default function StatsTab() {
     if (hl.data && hl.data[0]) setHealth(hl.data[0])
   }
 
+  const [healthForm, setHealthForm] = useState({ hrv:'', rhr:'', sleep_hours:'', sleep_score:'' })
+
+  async function logHealth() {
+    if (!healthForm.hrv && !healthForm.rhr && !healthForm.sleep_hours) return
+    await supabase.from('health_data').upsert({
+      date: today.toISOString().split('T')[0],
+      hrv: healthForm.hrv ? +healthForm.hrv : null,
+      rhr: healthForm.rhr ? +healthForm.rhr : null,
+      sleep_hours: healthForm.sleep_hours ? +healthForm.sleep_hours : null,
+      sleep_score: healthForm.sleep_score ? +healthForm.sleep_score : null,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'date' })
+    setHealthForm({ hrv:'', rhr:'', sleep_hours:'', sleep_score:'' })
+    load()
+  }
+
   async function logWeight() {
     if (!weight) return
     await supabase.from('weight_log').insert({ date:today.toISOString().split('T')[0], weight:+weight, bf:bf?+bf:null })
@@ -78,7 +94,7 @@ export default function StatsTab() {
               <div style={{ fontSize:10, color:'#555', letterSpacing:'0.1em', marginTop:4 }}>SLEEP SCORE</div>
             </div>
           </div>
-          <div style={{ fontSize:10, color:'#333', marginTop:8, letterSpacing:'0.1em' }}>AUTO-SYNCED FROM APPLE HEALTH VIA SHORTCUT · {health.date}</div>
+          <div style={{ fontSize:10, color:'#333', marginTop:8, letterSpacing:'0.1em' }}>SYNCED · {health.date}</div>
         </div>
       )}
 
@@ -101,6 +117,19 @@ export default function StatsTab() {
             <div style={{ fontSize:10, color:'#333', marginTop:2 }}>{s.sub}</div>
           </div>
         ))}
+      </div>
+
+      <div style={{ marginBottom:24 }}>
+        <div style={{ fontSize:10, letterSpacing:'0.2em', color:'#555', marginBottom:12 }}>LOG HEALTH — FROM BEVEL</div>
+        <div style={{ background:'#0a0a0a', border:'1px solid #111', padding:'20px', marginBottom:2 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:12 }}>
+            <input style={inp} type="number" placeholder="HRV (ms)" value={healthForm.hrv} onChange={e=>setHealthForm(f=>({...f,hrv:e.target.value}))} />
+            <input style={inp} type="number" placeholder="Recovery %" value={healthForm.sleep_score} onChange={e=>setHealthForm(f=>({...f,sleep_score:e.target.value}))} />
+            <input style={inp} type="number" placeholder="Resting HR (bpm)" value={healthForm.rhr} onChange={e=>setHealthForm(f=>({...f,rhr:e.target.value}))} />
+            <input style={inp} type="number" placeholder="Sleep (hours)" step="0.1" value={healthForm.sleep_hours} onChange={e=>setHealthForm(f=>({...f,sleep_hours:e.target.value}))} />
+          </div>
+          <button onClick={logHealth} style={{ width:'100%', padding:'14px', background:'#E53E3E', color:'#fff', border:'none', fontFamily:'Bebas Neue,sans-serif', fontSize:18, letterSpacing:2, cursor:'pointer' }}>LOG HEALTH</button>
+        </div>
       </div>
 
       <div style={{ marginBottom:24 }}>
