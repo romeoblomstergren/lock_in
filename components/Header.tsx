@@ -3,7 +3,7 @@ import { CYCLE_START, PHOTO_DATE } from '@/lib/data'
 
 export default function Header() {
   const today = new Date()
-  const cycleDay = Math.max(1, Math.ceil((today.getTime() - CYCLE_START.getTime()) / 86400000) + 1)
+  const cycleDay = Math.max(1, Math.ceil((today.getTime() - CYCLE_START.getTime()) / 86400000))
   const daysLeft = Math.max(0, Math.ceil((PHOTO_DATE.getTime() - today.getTime()) / 86400000))
   const pct = Math.min(100, Math.round(((30 - daysLeft) / 30) * 100))
 

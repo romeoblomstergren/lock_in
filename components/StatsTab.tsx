@@ -11,7 +11,7 @@ export default function StatsTab() {
   const [bf, setBf] = useState('')
 
   const today = new Date()
-  const cycleDay = Math.max(1, Math.ceil((today.getTime() - CYCLE_START.getTime()) / 86400000) + 1)
+  const cycleDay = Math.max(1, Math.ceil((today.getTime() - CYCLE_START.getTime()) / 86400000))
   const daysLeft = Math.max(0, Math.ceil((PHOTO_DATE.getTime() - today.getTime()) / 86400000))
   const cyclePct = Math.min(100, Math.round((cycleDay / 91) * 100))
   const photoPct = Math.min(100, Math.round(((30 - daysLeft) / 30) * 100))
