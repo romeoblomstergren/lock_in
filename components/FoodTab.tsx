@@ -18,7 +18,7 @@ export default function FoodTab() {
   }
 
   async function addMeal() {
-    if (!form.cal && !form.pro) return
+    if (!form.cal && !form.pro && !form.water) return
     const meal = { date: today, name: form.name || 'Meal', cal: +form.cal||0, pro: +form.pro||0, carb: +form.carb||0, fat: +form.fat||0, water: +form.water||0 }
     await supabase.from('meals').insert(meal)
     setForm({ name: '', cal: '', pro: '', carb: '', fat: '', water: '' })
