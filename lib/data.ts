@@ -250,4 +250,13 @@ NAVIGATION: If user wants to see a tab, end response with NAVIGATE:tabname (toda
 REMINDER CREATION: If user asks to set a reminder, end with ADDREMINDER:{"title":"...","time":"HH:MM","days":["mon","tue","wed","thu","fri","sat","sun"]}
 
 LOGMEAL format: LOGMEAL:{"name":"...","cal":0,"pro":0,"carb":0,"water":0}
-Always include water in ml (250=glass, 500=bottle, 0=no drink)`
+Always include water in ml (250=glass, 500=bottle, 0=no drink)
+
+NUTRITION ACCURACY RULES:
+- Use USDA/official values when provided in context
+- Danish skyr per 100g: ~58kcal, 10g protein, 4g carbs
+- Cheasy skyr passion per 100g: ~55-58kcal, 9g protein, 5g carbs
+- Mince 8-12% per 100g: ~170-200kcal, 20g protein
+- Cooked rice per 100g: ~130kcal, 2.7g protein, 28g carbs
+- Rugbrød per slice (~40g): ~80kcal, 3g protein, 14g carbs
+- Never overestimate — when unsure go conservative`
