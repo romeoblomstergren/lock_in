@@ -5,33 +5,46 @@ export async function POST(req: NextRequest) {
   const messages = body.messages || []
   const lastUserMsg = messages.filter((m: any) => m.role === 'user').pop()?.content || ''
 
-  const foodKeywords = ['spiste', 'drak', 'ate', 'had', 'log', 'logged', 'mince', 'skyr', 'ris', 'rice', 'æg', 'eggs', 'rugbrød', 'protein', 'shake', 'bar', 'chicken', 'kylling', 'brød', 'mad', 'grams', 'gr', 'g ', 'kg', 'ml', 'stk', 'pieces']
+  const foodKeywords = ['spiste', 'drak', 'ate', 'had', 'log', 'logged', 'mince', 'skyr', 'ris', 'rice', 'æg', 'eggs', 'rugbrød', 'protein', 'shake', 'bar', 'chicken', 'kylling', 'brød', 'mad', 'gr', 'ml', 'stk', 'pack', 'pak', 'pieces', 'hamburger', 'kamsteg', 'solsikke', 'peanut', 'jordnød']
   const hasFood = foodKeywords.some(kw => lastUserMsg.toLowerCase().includes(kw))
 
   let nutritionContext = ''
 
   if (hasFood) {
     try {
-      // Search Open Food Facts — includes Danish/Lidl/Netto products
-      const query = encodeURIComponent(lastUserMsg.slice(0, 80).replace(/[0-9]+g?r?\s*/g, '').trim())
-      const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${query}&search_simple=1&action=process&json=1&page_size=1&lc=da&cc=dk`)
-      
+      const cleanQuery = lastUserMsg
+        .replace(/\d+\s*(gr|g|ml|stk|pieces|pack|pak)/gi, '')
+        .replace(/jeg spiste|jeg drak|i ate|i had|log|logged/gi, '')
+        .trim()
+        .slice(0, 80)
+
+      const query = encodeURIComponent(cleanQuery)
+      const res = await fetch(
+        `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${query}&search_simple=1&action=process&json=1&page_size=3&lc=da&cc=dk`,
+        { headers: { 'User-Agent': 'LockInApp/1.0' } }
+      )
+
       if (res.ok) {
         const data = await res.json()
-        const product = data.products?.[0]
-        if (product?.nutriments) {
-          const n = product.nutriments
-          const kcal = n['energy-kcal_100g'] || n['energy_100g'] ? Math.round((n['energy_100g']||0) / 4.184) : null
-          const protein = n['proteins_100g']
-          const carbs = n['carbohydrates_100g']
-          const fat = n['fat_100g']
-          const name = product.product_name_da || product.product_name || product.generic_name
-          if (name && (kcal || protein)) {
-            nutritionContext = `\n\n[DANISH PRODUCT FOUND: "${name}" — ${kcal ? Math.round(kcal)+'kcal' : ''}, ${protein ? Math.round(protein)+'g protein' : ''}, ${carbs ? Math.round(carbs)+'g carbs' : ''}, ${fat ? Math.round(fat)+'g fat' : ''} per 100g. Use these exact values scaled to the amount mentioned.]`
-          }
+        const products = data.products?.slice(0, 3) || []
+        
+        if (products.length > 0) {
+          const productInfo = products.map((p: any) => {
+            const n = p.nutriments || {}
+            const kcal = Math.round(n['energy-kcal_100g'] || (n['energy_100g'] || 0) / 4.184)
+            const protein = Math.round(n['proteins_100g'] || 0)
+            const carbs = Math.round(n['carbohydrates_100g'] || 0)
+            const fat = Math.round(n['fat_100g'] || 0)
+            const name = p.product_name_da || p.product_name || p.generic_name || 'Unknown'
+            return `"${name}": ${kcal}kcal, ${protein}g protein, ${carbs}g carbs, ${fat}g fat per 100g`
+          }).join(' | ')
+
+          nutritionContext = `\n\n[DANISH PRODUCT DATABASE RESULTS — USE THESE EXACT VALUES: ${productInfo}. Scale to the amount mentioned by the user. DO NOT estimate — use only these values.]`
         }
       }
-    } catch {}
+    } catch (e) {
+      console.error('Food search error:', e)
+    }
   }
 
   if (nutritionContext && messages.length > 0) {
